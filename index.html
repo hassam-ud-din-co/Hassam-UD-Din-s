@@ -1,0 +1,1118 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Hassamuddin &amp; Company</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .product-card {
+            transition: transform 0.2s;
+        }
+        .product-card:hover {
+            transform: scale(1.05);
+        }
+        button {
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3b82f6; /* Tailwind's blue-500 */
+        }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+        .dropdown-menu a:hover {
+            background-color: #f3f4f6; /* Tailwind's gray-100 */
+        }
+        .marquee-left {
+            animation: marquee-left 30s linear infinite;
+        }
+        .marquee-right {
+            animation: marquee-right 30s linear infinite;
+        }
+        @keyframes marquee-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        @keyframes marquee-right {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .quiz-button {
+            background: linear-gradient(45deg, #ff6b6b, #f06595, #cc5de8, #845ef7, #5c7cfa, #339af0, #22b8cf, #20c997, #51cf66, #94d82d, #fcc419, #ff922b);
+            background-size: 300% 300%;
+            animation: gradient-animation 5s ease infinite;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .quiz-modal {
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* CSS animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+    </style>
+    <script>
+        // Cart state
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let currentBase = null;
+        let currentIngredients = [];
+        
+        // Save cart to localStorage
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        const prices = {
+            bases: {
+                'Milk Chocolate': 5.00,
+                'Dark Chocolate': 6.00,
+                'White Chocolate': 5.50
+            },
+            ingredients: {
+                'Nuts': 1.50,
+                'Caramel': 1.00,
+                'Marshmallows': 0.75,
+                'Sprinkles': 0.50,
+                'Sea Salt': 0.25
+            }
+        };
+document.querySelectorAll('.wishlist-icon').forEach(icon => {
+        icon.addEventListener('click', function() {
+            this.classList.toggle('active');
+        });
+    });
+
+        function addToCart(product) {
+            alert(product.name + " has been added to your cart at PKR" + product.price);
+        }
+
+        function showDetails(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        // Cart functions
+        function openCartModal() {
+            updateCart();
+            document.getElementById('cart-modal').classList.remove('hidden');
+        }
+
+        function closeCartModal() {
+            document.getElementById('cart-modal').classList.add('hidden');
+        }
+
+        function updateCart() {
+            const cartItems = document.getElementById('cart-items');
+            const cartTotal = document.getElementById('cart-total');
+            
+            // Clear current items
+            cartItems.innerHTML = '';
+            
+            // Add items to cart display
+            cart.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center mb-2 p-2 hover:bg-gray-50 rounded-lg';
+                itemDiv.innerHTML = `
+                    <div class="flex-1">
+                        <span>${item.name}</span>
+                        ${item.quantity ? `<span class="text-sm text-gray-500 ml-2">x${item.quantity}</span>` : ''}
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="changeQuantity(${index}, -1)" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span>$${(item.price * (item.quantity || 1)).toFixed(2)}</span>
+                        <button onclick="changeQuantity(${index}, 1)" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                cartItems.appendChild(itemDiv);
+            });
+
+            // Calculate and display total
+            const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+            cartTotal.textContent = `$${total.toFixed(2)}`;
+            saveCart();
+        }
+
+        function changeQuantity(index, amount) {
+            const item = cart[index];
+            item.quantity = Math.max(1, (item.quantity || 1) + amount);
+            updateCart();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        function addToCart(item) {
+            const existingItem = cart.find(i => i.name === item.name);
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                item.quantity = 1;
+                cart.push(item);
+            }
+            updateCart();
+            
+            // Add animation feedback
+            const cartIcon = document.querySelector('.fa-shopping-cart');
+            cartIcon.classList.add('animate-bounce');
+            setTimeout(() => cartIcon.classList.remove('animate-bounce'), 1000);
+        }
+
+        function checkout() {
+            alert('Thank you for your purchase!');
+            cart = [];
+            closeCartModal();
+        }
+
+        // Selection functions
+        function selectBase(base) {
+            currentBase = base;
+            const baseItem = {
+                name: `${base} Base`,
+                price: prices.bases[base]
+            };
+            addToCart(baseItem);
+        }
+
+        function selectIngredient(ingredient) {
+    let selectElement;
+
+    // Determine which dropdown to use based on the ingredient
+    if (ingredient === 'Nuts') {
+        selectElement = document.getElementById('quantity-nuts');
+    } else if (ingredient === 'Fruits') {
+        selectElement = document.getElementById('quantity-fruits'); // Make sure to create this dropdown
+    } else if (ingredient === 'Caramel') {
+        selectElement = document.getElementById('quantity-caramel'); // Make sure to create this dropdown
+    }
+    // Add more conditions for other ingredients as needed
+
+    const selectedPrice = parseFloat(selectElement.value); // Get the selected price
+
+    if (!currentIngredients.includes(ingredient)) {
+        currentIngredients.push(ingredient);
+        const ingredientItem = {
+            name: ingredient,
+            price: selectedPrice // Use the selected price
+        };
+        addToCart(ingredientItem);
+    }
+    }
+    function addToCart(item) {
+    const existingItem = cart.find(i => i.name === item.name && i.price === item.price);
+    if (existingItem) {
+        existingItem.quantity += 1; // Increment quantity if item already exists
+    } else {
+        item.quantity = 1; // Set quantity to 1 for new items
+        cart.push(item); // Add new item to cart
+    }
+    updateCartDisplay(); // Update the cart display
+}
+
+function updateCartDisplay() {
+    const cartContainer = document.getElementById('cart-container');
+    cartContainer.innerHTML = ''; // Clear existing cart display
+
+    cart.forEach(item => {
+        const cartItem = document.createElement('div');
+        cartItem.textContent = `${item.name} - $${item.price} x ${item.quantity}`;
+        cartContainer.appendChild(cartItem);
+    });
+
+    const totalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const totalDisplay = document.createElement('div');
+    totalDisplay.textContent = `Total: $${totalPrice.toFixed(2)}`;
+    cartContainer.appendChild(totalDisplay);
+}
+    console.log("Selected Ingredient:", ingredient);
+console.log("Selected Price:", selectedPrice);
+        function showDetails(id) {
+            var details = document.getElementById(id);
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+            } else {
+                details.classList.add('hidden');
+            }
+        }
+    </script>
+   
+</head>
+ <body class="bg-gray-100">
+  <!-- Header -->
+  <header class="bg-green-700 text-white p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <div class="text-4xl font-bold header-title">
+            <a href="index.html">Hassamuddin &amp; Company</a>
+        </div>
+        <nav>
+            <ul class="flex space-x-4">
+                <li><a class="hover:underline" href="index.html">Home</a></li>
+                <li><a class="hover:underline" href="about.html">About Us</a></li>
+                <li><a class="hover:underline" href="services.html">Services</a></li>
+                <li><a class="hover:underline" href="products.html">Products</a></li>
+                <li><a class="hover:underline" href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+        <div class="relative">
+            <i class="fas fa-shopping-cart text-2xl cursor-pointer" id="cart-icon"></i>
+            <span class="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs px-2" id="cart-count">0</span>
+        </div>
+    </div>
+</header>
+ <!-- Hero Section -->
+ <section class="relative bg-white py-20">
+    <div class="absolute inset-0">
+        <img alt="A beautiful, expansive green field with a clear blue sky, representing the agricultural focus of Hassamuddin &amp; Company" class="w-full h-full object-cover opacity-30" height="1080" src="https://storage.googleapis.com/a1aa/image/yLIS9zRWJTZaTYPhSaApdoqNqJEiAq_InomBlLhvJTw.jpg" width="1920"/>
+    </div>
+    <div class="container mx-auto flex flex-col md:flex-row items-center relative z-10">
+        <div class="md:w-1/2 text-center md:text-left p-6 bg-white bg-opacity-90 rounded-lg shadow-2xl">
+            <h1 class="text-6xl font-bold text-green-700 mb-4">Welcome to Hassamuddin &amp; Company</h1>
+            <p class="text-gray-700 mb-6 text-xl">Providing quality pesticides, herbicides, and fertilizers since 1950. Trusted by farmers for three generations.</p>
+            <a class="bg-green-700 text-white px-8 py-4 rounded-full text-xl font-semibold hover:bg-green-800 transition duration-300 shadow-lg" href="products.html">Explore Our Products</a>
+        </div>
+        <div class="md:w-1/2 mt-8 md:mt-0 flex justify-center">
+            <img alt="A lush green field with crops growing, representing the agricultural focus of Hassamuddin &amp; Company" class="rounded-lg shadow-2xl transform hover:scale-105 transition duration-300" height="400" src="https://storage.googleapis.com/a1aa/image/CvZc4hm1TgRLCVHl3Tp9Yvsqrc0czBjJKhmPCUzgKyY.jpg" width="600">
+        </div>
+    </div>
+</section>
+ <!-- Services Section -->
+ <section class="bg-gray-200 py-12">
+    <div class="container mx-auto text-center">
+        <h2 class="text-3xl font-bold text-green-700 mb-8">Our Services</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded shadow">
+                <i class="fas fa-seedling text-green-700 text-4xl mb-4"></i>
+                <h3 class="text-xl font-bold mb-2">Pesticides</h3>
+                <p class="text-gray-700">High-quality pesticides to protect your crops from pests and diseases.</p>
+            </div>
+            <div class="bg-white p-6 rounded shadow">
+                <i class="fas fa-leaf text-green-700 text-4xl mb-4"></i>
+                <h3 class="text-xl font-bold mb-2">Herbicides</h3>
+                <p class="text-gray-700">Effective herbicides to control unwanted vegetation and weeds.</p>
+            </div>
+            <div class="bg-white p-6 rounded shadow">
+                <i class="fas fa-flask text-green-700 text-4xl mb-4"></i>
+                <h3 class="text-xl font-bold mb-2">Fertilizers</h3>
+                <p class="text-gray-700">Nutrient-rich fertilizers to enhance soil fertility and crop yield.</p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Products Section -->
+<section class="bg-white py-12">
+    <div class="container mx-auto text-center">
+        <h2 class="text-3xl font-bold text-green-700 mb-8">BAYER</h2>
+        <div class="flex overflow-x-auto space-x-8">
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/confidor-product-image.jpg" alt="A bottle of pesticide with a green label and a sprayer" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Confidor (Insecticide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$50.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Confidor is an insecticide that provides effective control of a wide range of pests. It works by disrupting the nervous system of insects, leading to paralysis and death. Confidor is known for its long-lasting residual effect and rainfastness.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Effective against resistant pests</li>
+                                <li>Long-lasting protection (up to 14 days)</li>
+                                <li>Safe for beneficial insects and pollinators</li>
+                                <li>Rainfast within 1 hour of application</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Cotton</li>
+                                <li>Vegetables (tomatoes, peppers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.3–0.5 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/roundup-product-image.jpg" alt="A container of herbicide with a blue label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Roundup (Herbicide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$45.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Roundup is a herbicide that controls unwanted weeds efficiently. It works by inhibiting a specific enzyme pathway necessary for plant growth. Roundup is known for its fast action and long-lasting effect.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Effective against a wide range of weeds</li>
+                                <li>Fast-acting and long-lasting</li>
+                                <li>Safe for use in various crops</li>
+                                <li>Low environmental impact</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Cereals</li>
+                                <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">1–2 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/serenade-product-image.jpg" alt="A bag of fertilizer with a yellow label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Serenade (Biofungicide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$40.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Serenade is a biofungicide that enhances soil fertility and crop yield. It works by promoting beneficial microbial activity in the soil, leading to healthier plants. Serenade is known for its long-lasting effect and safety for the environment.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Enhances soil fertility</li>
+                                <li>Promotes beneficial microbial activity</li>
+                                <li>Safe for the environment</li>
+                                <li>Long-lasting effect</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Vegetables (potatoes, tomatoes, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                                <li>Ornamentals</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">2–3 grams per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/luna-product-image.jpg" alt="A bottle of fungicide with a green label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Luna (Fungicide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$55.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Luna is a fungicide that provides dual-action protection against fungal diseases. It works by inhibiting fungal growth and promoting plant health. Luna is known for its long-lasting effect and safety for beneficial organisms.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Dual-action protection</li>
+                                <li>Promotes plant health</li>
+                                <li>Safe for beneficial organisms</li>
+                                <li>Long-lasting effect</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                                <li>Ornamentals</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/decis-product-image.jpg" alt="A bottle of insecticide with a red label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Decis (Insecticide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$50.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Decis is an insecticide that provides rapid knockdown and long-lasting control of pests. It works by disrupting the nervous system of insects, leading to paralysis and death. Decis is known for its fast action and long-lasting effect.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Rapid knockdown</li>
+                                <li>Long-lasting control</li>
+                                <li>Safe for beneficial insects and pollinators</li>
+                                <li>Low environmental impact</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Cotton</li>
+                                <li>Vegetables (tomatoes, peppers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.3–0.5 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/aliette-product-image.jpg" alt="A bottle of fungicide with a blue label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Aliette (Fungicide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$45.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Aliette is a fungicide that provides effective control of soil-borne and foliar diseases. It works by inhibiting fungal growth and promoting plant health. Aliette is known for its long-lasting effect and safety for beneficial organisms.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Effective control of diseases</li>
+                                <li>Promotes plant health</li>
+                                <li>Safe for beneficial organisms</li>
+                                <li>Long-lasting effect</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Vegetables (potatoes, tomatoes, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                                <li>Ornamentals</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">2–3 grams per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/poncho-product-image.jpg" alt="A bottle of seed treatment insecticide with a yellow label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Poncho (Seed Treatment Insecticide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$50.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Poncho is a seed treatment insecticide that protects crops from soil-dwelling and early-season insect pests. It works by providing a protective barrier around the seed, ensuring healthy crop establishment.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Protects seeds and young plants from pests</li>
+                                <li>Enhances root development and early vigor</li>
+                                <li>Long-lasting protection (up to 21 days)</li>
+                                <li>Low environmental impact</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Cereals (wheat, barley, etc.)</li>
+                                <li>Cotton</li>
+                                <li>Vegetables (tomatoes, peppers, etc.)</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.5–1.0 mL per kilogram of seeds</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/nativo-product-image.jpg" alt="A bottle of fungicide with a green label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Nativo (Fungicide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$45.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Nativo is a fungicide that provides broad-spectrum control of fungal diseases. It works by inhibiting fungal growth and promoting plant health. Nativo is known for its long-lasting effect and safety for beneficial organisms.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Broad-spectrum control of fungal diseases</li>
+                                <li>Promotes plant health</li>
+                                <li>Safe for beneficial organisms</li>
+                                <li>Long-lasting effect</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                                <li>Ornamentals</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/movento-product-image.jpg" alt="A bottle of insecticide with a blue label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Movento (Insecticide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$40.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Movento is an insecticide that provides systemic control of sucking pests. It works by disrupting the feeding behavior of pests, leading to their death. Movento is known for its long-lasting effect and safety for beneficial organisms.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Systemic control of sucking pests</li>
+                                <li>Promotes plant health</li>
+                                <li>Safe for beneficial organisms</li>
+                                <li>Long-lasting effect</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                                <li>Ornamentals</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://www.bayer.com/sites/default/files/2021-03/folicur-product-image.jpg" alt="A bottle of fungicide with a red label" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Folicur (Fungicide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$55.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Folicur is a fungicide that provides effective control of fungal diseases in cereals, fruits, and vegetables. It works by inhibiting fungal growth and promoting plant health. Folicur is known for its long-lasting effect and safety for beneficial organisms.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Effective control of fungal diseases</li>
+                                <li>Promotes plant health</li>
+                                <li>Safe for beneficial organisms</li>
+                                <li>Long-lasting effect</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Cereals (wheat, barley, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                                <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://storage.googleapis.com/a1aa/image/REvd07hQ7BKerweffCC86G9wz0b8wu6emzuzciVTI0M.jpg" alt="Belt insecticide bottle with Bayer CropScience branding" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Belt (Insecticide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$50.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Belt is a flubendiamide-based insecticide that provides effective control of lepidopteran pests such as bollworms, fruit borers, and leaf rollers. It works by disrupting insect muscle function, leading to paralysis and death. Belt is known for its long-lasting residual effect and rainfastness.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Effective against resistant pests</li>
+                                <li>Long-lasting protection (up to 14 days)</li>
+                                <li>Safe for beneficial insects and pollinators</li>
+                                <li>Rainfast within 1 hour of application</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Cotton</li>
+                                <li>Vegetables (tomatoes, peppers, etc.)</li>
+                                <li>Fruits (grapes, apples, etc.)</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">0.3–0.5 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                <img src="https://storage.googleapis.com/a1aa/image/2evaQQjIEsxq2GqoKpWfsO7yx6HeCeyxKTdfwG99zbc.jpg" alt="Sivanto insecticide bottle with Bayer CropScience branding" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold mb-2">Sivanto (Insecticide)</h2>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-xl font-bold text-gray-900">$45.00</span>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                    </div>
+                    <div class="relative mt-4">
+                        <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                        <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                            <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                            <p class="text-gray-700 mb-2">Sivanto is a flupyradifurone-based insecticide that controls sucking pests like aphids, whiteflies, and psyllids. It is highly effective in crops such as citrus, vegetables, and cotton. Sivanto is known for its fast action and compatibility with integrated pest management (IPM) programs.</p>
+                            <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Fast-acting and long-lasting</li>
+                                <li>Safe for beneficial insects and pollinators</li>
+                                <li>Effective against resistant pest populations</li>
+                                <li>Low environmental impact</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                            <ul class="list-disc list-inside text-gray-700 mb-2">
+                                <li>Citrus</li>
+                                <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                                <li>Cotton</li>
+                            </ul>
+                            <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                            <p class="text-gray-700 mb-2">1–2 mL per liter of water (foliar spray)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                </div>
+            </div>
+          
+                         <!-- Product 3 -->
+                <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                    <img src="https://storage.googleapis.com/a1aa/image/wvP4EYs5aBX5kIf8e5OwS3yERNJM_u42doh1xJ1yACQ.jpg" alt="Antracol fungicide bottle with Bayer CropScience branding" class="w-full h-48 object-cover rounded-t-lg">
+                    <div class="p-4">
+                        <h2 class="text-xl font-bold mb-2">Antracol (Fungicide)</h2>
+                        <div class="flex items-center justify-between mt-4">
+                            <span class="text-xl font-bold text-gray-900">$40.00</span>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                        </div>
+                        <div class="relative mt-4">
+                            <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                            <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                                <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                                <p class="text-gray-700 mb-2">Antracol is a propineb-based fungicide that provides broad-spectrum control of fungal diseases such as downy mildew, early blight, and leaf spot. It is widely used in vegetables, fruits, and ornamentals. Antracol also contains zinc, which promotes plant health and vigor.</p>
+                                <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                                <ul class="list-disc list-inside text-gray-700 mb-2">
+                                    <li>Broad-spectrum disease control</li>
+                                    <li>Contains zinc for plant nutrition</li>
+                                    <li>Long-lasting protection (up to 10 days)</li>
+                                    <li>Safe for use in IPM programs</li>
+                                </ul>
+                                <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                                <ul class="list-disc list-inside text-gray-700 mb-2">
+                                    <li>Vegetables (potatoes, tomatoes, etc.)</li>
+                                    <li>Fruits (grapes, apples, etc.)</li>
+                                    <li>Ornamentals</li>
+                                </ul>
+                                <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                                <p class="text-gray-700 mb-2">2–3 grams per liter of water (foliar spray)</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                    </div>
+                </div>
+                <!-- Product 4 -->
+                <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                    <img src="https://storage.googleapis.com/a1aa/image/EEsWZOWt9x8k7vBWqUFbsq0IH4M51skS-KivVK0pIgg.jpg" alt="Gaucho seed treatment insecticide bottle with Bayer CropScience branding" class="w-full h-48 object-cover rounded-t-lg">
+                    <div class="p-4">
+                        <h2 class="text-xl font-bold mb-2">Gaucho (Seed Treatment Insecticide)</h2>
+                        <div class="flex items-center justify-between mt-4">
+                            <span class="text-xl font-bold text-gray-900">$55.00</span>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                        </div>
+                        <div class="relative mt-4">
+                            <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                            <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                                <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                                <p class="text-gray-700 mb-2">Gaucho is a imidacloprid-based seed treatment insecticide that protects crops from soil-dwelling and early-season pests. It is widely used in cereals, cotton, and vegetables to ensure healthy crop establishment.</p>
+                                <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                                <ul class="list-disc list-inside text-gray-700 mb-2">
+                                    <li>Protects seeds and young plants from pests</li>
+                                    <li>Enhances root development and early vigor</li>
+                                    <li>Long-lasting protection (up to 21 days)</li>
+                                    <li>Low environmental impact</li>
+                                </ul>
+                                <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                                <ul class="list-disc list-inside text-gray-700 mb-2">
+                                    <li>Cereals (wheat, barley, etc.)</li>
+                                    <li>Cotton</li>
+                                    <li>Vegetables (tomatoes, peppers, etc.)</li>
+                                </ul>
+                                <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                                <p class="text-gray-700 mb-2">0.5–1.0 mL per kilogram of seeds</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                    </div>
+                </div>
+                <!-- Product 5 -->
+                <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+                    <img src="https://storage.googleapis.com/a1aa/image/Y49Yit8JDmcRkd7RgzG5RqGwI6cmMFIX9pa7TN975Z8.jpg" alt="Luna Sensation fungicide bottle with Bayer CropScience branding" class="w-full h-48 object-cover rounded-t-lg">
+                    <div class="p-4">
+                        <h2 class="text-xl font-bold mb-2">Luna Sensation (Fungicide)</h2>
+                        <div class="flex items-center justify-between mt-4">
+                            <span class="text-xl font-bold text-gray-900">$60.00</span>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                        </div>
+                        <div class="relative mt-4">
+                            <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                            <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">
+                                <p class="text-gray-700 mb-2"><strong>Company:</strong> Bayer CropScience</p>
+                                <p class="text-gray-700 mb-2">Luna Sensation is a fluopyram + trifloxystrobin-based fungicide that provides dual-action protection against fungal diseases in fruits, vegetables, and ornamentals. It is highly effective against powdery mildew, botrytis, and anthracnose.</p>
+                                <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                                <ul class="list-disc list-inside text-gray-700 mb-2">
+                                    <li>Dual-mode action for superior disease control</li>
+                                    <li>Enhances crop quality and shelf life</li>
+                                    <li>Long-lasting protection (up to 14 days)</li>
+                                    <li>Low risk of resistance development</li>
+                                </ul>
+                                <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                                <ul class="list-disc list-inside text-gray-700 mb-2">
+                                    <li>Fruits (grapes, strawberries, etc.)</li>
+                                    <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                                    <li>Ornamentals</li>
+                                </ul>
+                                <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                                <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="bg-white py-12">
+        <div class="container mx-auto text-center">
+            <h2 class="text-3xl font-bold text-green-700 mb-8">Our Products</h2>
+            <div class="flex overflow-x-auto space-x-8">
+                <!-- Amistar (Fungicide) -->
+        <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+            <img src="https://storage.googleapis.com/a1aa/image/amistar-fungicide-syngenta.jpg" alt="Amistar fungicide bottle with Syngenta branding" class="w-full h-48 object-cover rounded-t-lg">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-2">Amistar (Fungicide)</h2>
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xl font-bold text-gray-900">$55.00</span>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <div class="relative mt-4">
+                    <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                    <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">    <p class="text-gray-700 mb-2"><strong>Company:</strong> Syngenta</p>
+                        <p class="text-gray-700 mb-2">Amistar is a azoxystrobin-based fungicide that provides broad-spectrum control of fungal diseases in crops such as cereals, fruits, and vegetables. It is highly effective against diseases like powdery mildew, rust, and leaf spot. Amistar also enhances crop yield and quality by improving plant health.</p>
+                        <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Broad-spectrum disease control</li>
+                            <li>Enhances plant photosynthesis and stress tolerance</li>
+                            <li>Long-lasting protection (up to 14 days)</li>
+                            <li>Low risk of resistance development</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Cereals (wheat, barley, etc.)</li>
+                            <li>Fruits (grapes, apples, etc.)</li>
+                            <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                        <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                    </div>
+                </div>
+                <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+            </div>
+        </div>
+
+        <!-- Actara (Insecticide) -->
+        <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+            <img src="https://storage.googleapis.com/a1aa/image/actara-insecticide-syngenta.jpg" alt="Actara insecticide bottle with Syngenta branding" class="w-full h-48 object-cover rounded-t-lg">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-2">Actara (Insecticide)</h2>
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xl font-bold text-gray-900">$55.00</span>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <div class="relative mt-4">
+                    <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                    <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">       <p class="text-gray-700 mb-2"><strong>Company:</strong> Syngenta</p>
+                        <p class="text-gray-700 mb-2">Actara is a thiamethoxam-based systemic insecticide that controls a wide range of sucking and chewing pests, including aphids, whiteflies, and thrips. It is used in crops like vegetables, fruits, and cereals. Actara provides both foliar and soil application options.</p>
+                        <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Systemic action for thorough pest control</li>
+                            <li>Effective against resistant pest populations</li>
+                            <li>Long-lasting protection (up to 21 days)</li>
+                            <li>Safe for beneficial insects when used as directed</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Vegetables (tomatoes, peppers, etc.)</li>
+                            <li>Fruits (citrus, grapes, etc.)</li>
+                            <li>Cereals (wheat, rice, etc.)</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                        <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                        <p class="text-gray-700 mb-2">Soil application: 2–3 mL per plant</p>
+                    </div>
+                </div>
+                <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+            </div>
+        </div>
+
+        <!-- Gramoxone (Herbicide) -->
+        <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+            <img src="https://storage.googleapis.com/a1aa/image/gramoxone-herbicide-syngenta.jpg" alt="Gramoxone herbicide bottle with Syngenta branding" class="w-full h-48 object-cover rounded-t-lg">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-2">Gramoxone (Herbicide)</h2>
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xl font-bold text-gray-900">$55.00</span>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <div class="relative mt-4">
+                    <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                    <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">      <p class="text-gray-700 mb-2"><strong>Company:</strong> Syngenta</p>
+                        <p class="text-gray-700 mb-2">Gramoxone is a paraquat-based non-selective herbicide used for weed control in a wide range of crops and non-crop areas. It is highly effective against annual and perennial weeds and is often used for pre-planting and post-harvest applications.</p>
+                        <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Fast-acting contact herbicide</li>
+                            <li>Effective against resistant weeds</li>
+                            <li>Rainfast within 30 minutes of application</li>
+                            <li>Ideal for no-till farming systems</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Pre-planting use in cereals, soybeans, and corn</li>
+                            <li>Non-crop areas (roadsides, industrial sites)</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                        <p class="text-gray-700 mb-2">5–10 mL per liter of water (foliar spray)</p>
+                    </div>
+                </div>
+                <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+            </div>
+        </div>
+
+        <!-- Cruiser (Seed Treatment Insecticide) -->
+        <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+            <img src="https://storage.googleapis.com/a1aa/image/cruiser-seed-treatment-syngenta.jpg" alt="Cruiser seed treatment insecticide bottle with Syngenta branding" class="w-full h-48 object-cover rounded-t-lg">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-2">Cruiser (Seed Treatment Insecticide)</h2>
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xl font-bold text-gray-900">$55.00</span>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <div class="relative mt-4">
+                    <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                    <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">      <p class="text-gray-700 mb-2"><strong>Company:</strong> Syngenta</p>
+                        <p class="text-gray-700 mb-2">Cruiser is a thiamethoxam-based seed treatment insecticide that protects crops from soil-dwelling and early-season insect pests. It is widely used in corn, soybeans, and cereals to ensure healthy crop establishment and early vigor.</p>
+                        <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Protects seeds and young plants from pests</li>
+                            <li>Enhances root development and early vigor</li>
+                            <li>Long-lasting protection (up to 21 days)</li>
+                            <li>Low environmental impact</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Corn</li>
+                            <li>Soybeans</li>
+                            <li>Cereals (wheat, barley, etc.)</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                        <p class="text-gray-700 mb-2">0.5–1.0 mL per kilogram of seeds</p>
+                    </div>
+                </div>
+                <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+            </div>
+        </div>
+
+        <!-- Tilt (Fungicide) -->
+        <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+            <img src="https://storage.googleapis.com/a1aa/image/tilt-fungicide-syngenta.jpg" alt="Tilt fungicide bottle with Syngenta branding" class="w-full h-48 object-cover rounded-t-lg">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-2">Tilt (Fungicide)</h2>
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xl font-bold text-gray-900">$55.00</span>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <div class="relative mt-4">
+                    <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                    <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">      <p class="text-gray-700 mb-2"><strong>Company:</strong> Syngenta</p>
+                        <p class="text-gray-700 mb-2">Tilt is a propiconazole-based fungicide that provides effective control of fungal diseases in cereals, fruits, and vegetables. It is particularly effective against rust, powdery mildew, and leaf spot diseases.</p>
+                        <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Broad-spectrum disease control</li>
+                            <li>Enhances crop yield and quality</li>
+                            <li>Long-lasting protection (up to 14 days)</li>
+                            <li>Compatible with IPM programs</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Cereals (wheat, barley, etc.)</li>
+                            <li>Fruits (grapes, apples, etc.)</li>
+                            <li>Vegetables (tomatoes, cucumbers, etc.)</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                        <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                    </div>
+                </div>
+                <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+            </div>
+        </div>
+
+        <!-- Karate (Insecticide) -->
+        <div class="bg-white rounded-lg shadow-md p-4 relative min-w-[300px] product-card">
+            <img src="https://storage.googleapis.com/a1aa/image/karate-insecticide-syngenta.jpg" alt="Karate insecticide bottle with Syngenta branding" class="w-full h-48 object-cover rounded-t-lg">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-2">Karate (Insecticide)</h2>
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xl font-bold text-gray-900">$55.00</span>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <div class="relative mt-4">
+                    <button class="info-button bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Info</button>
+                    <div class="info-content absolute left-0 top-full mt-2 w-full bg-white p-4 rounded shadow-md hidden">     <p class="text-gray-700 mb-2"><strong>Company:</strong> Syngenta</p>
+                        <p class="text-gray-700 mb-2">Karate is a lambda-cyhalothrin-based insecticide that provides rapid knockdown and long-lasting control of a wide range of insect pests. It is particularly effective against lepidopteran pests (e.g., caterpillars) and coleopteran pests (e.g., beetles).</p>
+                        <h3 class="text-lg font-semibold mb-1">Key Features:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Fast-acting contact and stomach poison</li>
+                            <li>Effective at low application rates</li>
+                            <li>Rainfast within 1 hour of application</li>
+                            <li>Safe for beneficial insects when used as directed</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Target Crops:</h3>
+                        <ul class="list-disc list-inside text-gray-700 mb-2">
+                            <li>Cotton</li>
+                            <li>Vegetables (cabbage, tomatoes, etc.)</li>
+                            <li>Fruits (apples, grapes, etc.)</li>
+                        </ul>
+                        <h3 class="text-lg font-semibold mb-1">Dosage:</h3>
+                        <p class="text-gray-700 mb-2">0.5–1.0 mL per liter of water (foliar spray)</p>
+                    </div>
+                </div>
+                <i class="fas fa-heart wishlist-icon text-gray-700 text-2xl mt-4"></i>
+            </div>
+        </div>
+    </div>
+    </section>
+    <!--About Us-->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+         <div class="text-center mb-12">
+          <h2 class="text-4xl font-bold text-gray-800">
+           About Us
+          </h2>
+          <p class="mt-4 text-gray-600">
+           Learn more about our journey and values
+          </p>
+         </div>
+         <div class="flex flex-wrap items-center">
+          <div class="w-full md:w-1/2 px-4 mb-8 md:mb-0">
+           <img alt="A team of diverse individuals working together in a modern office setting" class="rounded-lg shadow-lg" src="https://placehold.co/600x400"/>
+          </div>
+          <div class="w-full md:w-1/2 px-4">
+           <h3 class="text-3xl font-semibold text-gray-800 mb-4">
+            Our Story
+           </h3>
+           <p class="text-gray-600 mb-4">
+            Founded in 2010, our company has grown from a small startup to a leading player in the industry. Our journey has been marked by innovation, dedication, and a commitment to excellence.
+           </p>
+           <p class="text-gray-600 mb-4">
+            We believe in the power of technology to transform lives and are passionate about creating solutions that make a difference. Our team is a diverse group of talented individuals who bring their unique skills and perspectives to the table.
+           </p>
+           <p class="text-gray-600 mb-4">
+            Our core values are integrity, innovation, and customer satisfaction. We strive to uphold these values in everything we do, from the products we create to the way we interact with our customers and partners.
+           </p>
+           <a class="inline-block bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-600 transition duration-300" href="about.html">
+            Learn More
+           </a>
+          </div>
+         </div>
+        </div>
+       </section>
+ <!-- Testimonials Section -->
+ <section class="bg-gray-200 py-12">
+    <div class="container mx-auto text-center">
+        <h2 class="text-3xl font-bold text-green-700 mb-8">What Our Customers Say</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded shadow">
+                <img alt="Portrait of a satisfied farmer" class="rounded-full mx-auto mb-4" height="100" src="https://storage.googleapis.com/a1aa/image/N-yXY-oAZF53h1IgJFt9EpJuE4dmmS31ySsAKViOa78.jpg" width="100"/>
+                <p class="text-gray-700 mb-4">"Hassamuddin &amp; Company's products have significantly improved my crop yield. Highly recommend!"</p>
+                <h3 class="text-xl font-bold">Farmer A</h3>
+            </div>
+            <div class="bg-white p-6 rounded shadow">
+                <img alt="Portrait of a happy customer" class="rounded-full mx-auto mb-4" height="100" src="https://storage.googleapis.com/a1aa/image/glNQrohX7ufMQd1dY3ZUpfW3tbrB-BstspNTQKuO-vw.jpg" width="100"/>
+                <p class="text-gray-700 mb-4">"Their herbicides are very effective. I no longer have issues with weeds in my fields."</p>
+                <h3 class="text-xl font-bold">Farmer B</h3>
+            </div>
+            <div class="bg-white p-6 rounded shadow">
+                <img alt="Portrait of a satisfied client" class="rounded-full mx-auto mb-4" height="100" src="https://storage.googleapis.com/a1aa/image/ckE8fl8OLsiVRf6ccKN3mNQnl_0sMTwlZ5Ll_oQStZM.jpg" width="100"/>
+                <p class="text-gray-700 mb-4">"Excellent customer service and top-notch products. My go-to company for fertilizers."</p>
+                <h3 class="text-xl font-bold">Farmer C</h3>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Footer -->
+<footer class="bg-green-700 text-white py-4">
+    <div class="container mx-auto text-center">
+        <p>© 2023 Hassamuddin &amp; Company. All rights reserved.</p>
+        <div class="flex justify-center space-x-4 mt-2">
+            <a class="hover:text-gray-300" href="#"><i class="fab fa-facebook-f"></i></a>
+            <a class="hover:text-gray-300" href="#"><i class="fab fa-twitter"></i></a>
+            <a class="hover:text-gray-300" href="#"><i class="fab fa-linkedin-in"></i></a>
+            <a class="hover:text-gray-300" href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+    </div>
+</footer>
+
+    
+    
+</body>
+</html>
+
+
